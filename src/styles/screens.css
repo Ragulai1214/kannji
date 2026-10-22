@@ -213,11 +213,19 @@ a:focus-visible { outline: 3px solid #b06522; outline-offset: 3px; }
 @media(max-width:700px) {
   .action-live { padding:12px; }
   .action-live .screen-header { margin-bottom:8px; }
-  .action-live .fighter { min-width:120px; max-width:180px; }
-  .action-live .fighter-word { font-size:17px; }
-  .action-live .fighter .stat-numbers { font-size:11px; }
-  .action-live .fighter-score strong { font-size:1rem; }
   .action-live .action-hud { padding:4px 0; }
+}
+/* Keep mobile status panels compact without hiding names, points or abilities. */
+@media(max-width:700px) {
+  .battle-screen .fighter { width:clamp(100px,27vw,112px); min-width:0; max-width:none; padding:4px 6px; line-height:1.25; }
+  .battle-screen .fighter.enemy { top:6px; left:6px; }
+  .battle-screen .fighter.player { bottom:6px; right:6px; }
+  .battle-screen .fighter-label { font-size:10px; }
+  .battle-screen .fighter-word { font-size:14px; letter-spacing:.04em; line-height:1.35; }
+  .battle-screen .fighter-score { font-size:10.5px; line-height:1.35; }
+  .battle-screen .fighter-score strong { font-size:13px; margin-right:3px; }
+  .battle-screen .fighter .stat-numbers { font-size:10.5px; line-height:1.3; margin-top:2px; }
+  .battle-screen .fighter .hp-bar { height:5px; margin-top:3px; }
 }
 .player-overhead { position: absolute; transform: translate(-50%, -100%); display: flex; flex-direction: column; align-items: center; color: #10465c; font-weight: 700; pointer-events: none; text-shadow: 0 0 3px #fff, 0 0 6px #fff; z-index: 2; line-height: 1.2; }
 .player-overhead[hidden] { display: none; }
