@@ -17,14 +17,15 @@ export function gachaScreen(state: GachaState, revealing: boolean): string {
       <p role="status">${filler ? '不足分を数字「1」で補填しました。数字が含まれるため、試合開始時から合計1点です。' : '4文字を取得したため、抽選は終了です。'}</p>
       <p>試合へ進みます。</p>
       <button data-action="start">もう一度書く</button></div>` : `
-      <div class="draw-paper ${revealing ? 'revealing' : ''}">
+      <div class="draw-paper ${revealing ? 'revealing' : pending?.rarity ? `reveal-${pending.rarity}` : ''}">
         <p class="draw-caption">${revealing ? '墨をひらく' : pending ? 'この一字を、書きますか。' : '次の一字との出会い'}</p>
         <p class="draw-character" aria-hidden="${revealing}">${revealing ? '〰' : pending?.char ?? '？'}</p>
         <p class="draw-group">${!revealing && pending ? GROUPS[pending.group].name : '　'}</p>
+        ${!revealing && pending?.rarity ? `<p class="draw-rarity"><span class="rarity-badge rarity-${pending.rarity}">${pending.rarity}</span> レアリティ</p>` : ''}
       </div>
-      <p class="draw-status" role="status">${revealing ? '抽選中…' : pending ? `${pending.char}（${GROUPS[pending.group].name}）を引きました。書くか消すか選んでください。` : '「引く」を押してください。'}</p>
+      <p class="draw-status" role="status">${revealing ? '抽選中…' : pending ? `${pending.char}（${GROUPS[pending.group].name}・${pending.rarity}）を引きました。書くか消すか選んでください。` : '「引く」を押してください。'}</p>
       <div class="draw-actions">${pending && !revealing ? '<button data-action="keep">書く</button><button class="secondary" data-action="discard">消す</button>' : `<button data-action="draw" ${revealing ? 'disabled' : ''}>${revealing ? '抽選中…' : '引く'}</button>`}</div>
-      <p class="note">10回目の採否を決めた後、不足分は数字「1」で補填します。<br>点数とレアリティは試合で決まります。</p>`}
+      <p class="note">10回目の採否を決めた後、不足分は数字「1」で補填します。<br>レアリティは試合まで保持されます。</p>`}
     </div></div>
   </section>`;
 }

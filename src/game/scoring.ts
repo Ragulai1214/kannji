@@ -2,6 +2,7 @@ import { GROUPS } from '../data/groups.ts';
 import { RARITIES } from '../data/rarities.ts';
 import { RULES } from '../data/rules.ts';
 import { integer, roll } from './random.ts';
+import { rollRarity } from './rarity.ts';
 import type { FourCharacters, Kanji, Random, Score, ScoreStep, Vector } from './types.ts';
 
 function similarity(a: Vector, b: Vector): number {
@@ -28,6 +29,7 @@ export function scoreTeam(characters: FourCharacters, random: Random = Math.rand
     steps: [{ kind: 'filler', label: '数字「1」が含まれるため、合計1点', points: RULES.fillerTotal }],
   };
   const chars = characters as readonly Kanji[];
+  const resolved = [...chars];
   const steps: ScoreStep[] = chars.map((char, index) => {
     const [min, max] = GROUPS[char.group].points;
     return { kind: 'character', index, label: `${char.char}のポイント`, points: integer(min, max, random) };
@@ -35,12 +37,14 @@ export function scoreTeam(characters: FourCharacters, random: Random = Math.rand
   const [min, max] = RULES.combination.multiplier;
   const multiplier = min + roll(random) * (max - min);
   steps.push({ kind: 'combination', label: '組み合わせポイント', points: combinationPoints(chars, multiplier) });
-  const weight = RARITIES.reduce((sum, rarity) => sum + rarity.weight, 0);
-  if (weight <= 0 || RARITIES.some(rarity => rarity.weight < 0)) throw new Error('レアリティの重みが不正です。');
   chars.forEach((char, index) => {
-    let value = roll(random) * weight;
-    const rarity = RARITIES.find(entry => { value -= entry.weight; return value < 0; }) ?? RARITIES[RARITIES.length - 1];
+    const id = char.rarity ?? rollRarity(random);
+    resolved[index] = { ...char, rarity: id };
+    const rarity = RARITIES.find(entry => entry.id === id)!;
     steps.push({ kind: 'rarity', index, rarity: rarity.id, label: `${char.char}のレアリティ ${rarity.id}`, points: rarity.points });
   });
-  return { characters: [...characters] as unknown as FourCharacters, steps, total: steps.reduce((sum, step) => sum + step.points, 0), hasFiller };
+  const subtotal = steps.reduce((sum, step) => sum + step.points, 0);
+  const total = Math.max(RULES.total.min, Math.min(RULES.total.max, subtotal));
+  if (total !== subtotal) steps.push({ kind: 'limit', label: '得点範囲の調整', points: total - subtotal });
+  return { characters: resolved as unknown as FourCharacters, steps, total, hasFiller };
 }

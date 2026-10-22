@@ -7,7 +7,7 @@ import { RARITIES } from '../src/data/rarities.ts';
 import { RULES } from '../src/data/rules.ts';
 import { createGacha, draw, decide, getTeam } from '../src/game/gacha.ts';
 import { scoreTeam, combinationPoints } from '../src/game/scoring.ts';
-import { createBattle, compareScores, resultComment } from '../src/game/battle.ts';
+import { createBattle, resultComment } from '../src/game/battle.ts';
 const kanji = char => KANJI.find(entry => entry.char === char);
 const team = [...'風林火山'].map(kanji);
 const filler = {kind:'filler',char:'1'};
@@ -70,13 +70,13 @@ test('any filler overrides all scores and comments without rolling normal scores
 });
 test('kanji 一 is scored normally, steps follow character / combination / rarity order', () => {
   const score=scoreTeam(Array(4).fill(kanji('一')),()=>0);
-  assert.equal(score.hasFiller,false); assert.equal(score.total,136);
+  assert.equal(score.hasFiller,false); assert.equal(score.total,13540);
   assert.deepEqual(score.steps.map(s=>s.kind),['character','character','character','character','combination','rarity','rarity','rarity','rarity']);
   assert.equal(score.total, score.steps.reduce((sum,s)=>sum+s.points,0));
 });
 test('character rolls and rarities are independent for repeated characters', () => {
   const score=scoreTeam(Array(4).fill(kanji('天')),sequence([0,.25,.5,.999, .5, 0,.5,.78,.99]));
-  assert.deepEqual(score.steps.slice(0,4).map(s=>s.points),[10,32,55,100]);
+  assert.deepEqual(score.steps.slice(0,4).map(s=>s.points),[25,3019,6013,11989]);
   assert.deepEqual(score.steps.slice(5).map(s=>s.rarity),['N','C','R','UR']);
 });
 test('all rarity boundaries and upper-exclusive random range', () => {
@@ -87,7 +87,7 @@ test('all rarity boundaries and upper-exclusive random range', () => {
   assert.equal(RARITIES.reduce((sum,r)=>sum+r.weight,0),100);
 });
 test('six positional pairs, normalized similarity, negative totals clamped', () => {
-  assert.equal(combinationPoints(Array(4).fill(kanji('天')),1),120);
+  assert.equal(combinationPoints(Array(4).fill(kanji('天')),1),16800);
   const opposite=[kanji('心'),kanji('心'),kanji('走'),kanji('走')];
   assert.equal(combinationPoints(opposite,1),0);
   assert.equal(combinationPoints(Array(4).fill(kanji('天')),100),RULES.combination.max);
@@ -98,8 +98,9 @@ test('battle rolls fresh scores, uses normal enemy kanji including duplicates, a
   assert.equal(first.enemy.characters.map(k=>k.char).join(''),'天天天天');
   assert.ok(second.enemy.characters.every(k=>k.kind==='kanji'));
   assert.deepEqual(first.player,scoreTeam(team,()=>0));
-  assert.equal(first.outcome,compareScores(first.player.total,first.enemy.total));
-  assert.equal(compareScores(5,4),'win'); assert.equal(compareScores(4,5),'lose'); assert.equal(compareScores(4,4),'draw');
+  assert.equal(first.result,undefined);
+  assert.ok(first.abilities.player.stats.hp > 0);
+  assert.equal(first.background.length,4);
   const saved=JSON.stringify(first); createBattle(team,()=>.5); assert.equal(JSON.stringify(first),saved);
 });
 test('fresh gacha state and team snapshots do not retain previous selections', () => {

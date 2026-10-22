@@ -5,7 +5,7 @@ import { scoreTeam } from '../src/game/scoring.ts';
 import { scoreAt, stepAt } from '../src/game/timeline.ts';
 import { resultScreen } from '../src/screens/result.ts';
 import { battleScreen } from '../src/screens/battle.ts';
-import { createBattle } from '../src/game/battle.ts';
+import { resultComment, createBattle } from '../src/game/battle.ts';
 const team = [...'風林火山'].map(char => KANJI.find(k=>k.char===char));
 test('normal timeline starts at zero and each displayed total matches its earned steps',()=>{
   const score=scoreTeam(team,()=>.99);
@@ -22,15 +22,15 @@ test('filler stays at one for all animation frames, without normal score steps',
   const battle=createBattle(score.characters,()=>0);
   assert.match(battleScreen(battle),/id="player-score">1</);
   assert.match(battleScreen(battle),/数字「1」が含まれるため、合計1点/);
-  assert.match(resultScreen(battle),/もはや漢字じゃない/);
+  assert.match(resultScreen({...battle,result:{outcome:'lose',remaining:{player:0,enemy:battle.abilities.enemy.stats.hp},elapsed:5,hits:1,reason:'knockout'},comment:resultComment(battle.player,()=>0,'lose')}),/もはや漢字じゃない/);
 });
 test('result renders win, lose, draw and offers restart and home without rerolling',()=>{
   const battle=createBattle(team,()=>0);
   const snapshot=JSON.stringify(battle);
   for(const [outcome,label] of [['win','勝利'],['lose','敗北'],['draw','引き分け']]) {
-    const html=resultScreen({...battle,outcome});
-    assert.ok(html.includes(label)); assert.ok(html.includes(`${battle.player.total}<span>点`));
+    const html=resultScreen({...battle,result:{outcome,remaining:{player:0,enemy:10},elapsed:5,hits:1,reason:'knockout'},comment:resultComment(battle.player,()=>0,outcome)});
+    assert.ok(html.includes(label)); assert.ok(html.includes(`${battle.player.total.toLocaleString('ja-JP')}<span>点`));
     assert.match(html,/data-action="start">もう一度書く/); assert.match(html,/data-action="home"/);
   }
-  battleScreen(battle); resultScreen(battle); assert.equal(JSON.stringify(battle),snapshot);
+  battleScreen(battle); assert.throws(()=>resultScreen(battle)); assert.equal(JSON.stringify(battle),snapshot);
 });
