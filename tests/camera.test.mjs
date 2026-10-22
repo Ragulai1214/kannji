@@ -45,7 +45,7 @@ test('close camera stays above and behind the player at all orbit angles and por
   for(const aspect of [1.8,.5])for(const angle of [0,Math.PI/2,Math.PI,-Math.PI/2]){
     const p={x:3,z:-2},pose=followCameraPose(p,angle,aspect);
     const dx=pose.position.x-p.x,dz=pose.position.z-p.z;
-    assert.ok(Math.hypot(dx,dz)>=6 && Math.hypot(dx,dz)<=8.71);
+    close(Math.hypot(dx,dz),aspect<1?9.9:6);
     close(dx*Math.cos(angle)-dz*Math.sin(angle),0);
     assert.ok(dx*Math.sin(angle)+dz*Math.cos(angle)>0);
     close(pose.position.y,4);close(pose.target.y,1);

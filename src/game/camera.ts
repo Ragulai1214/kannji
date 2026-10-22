@@ -26,7 +26,7 @@ export function dodgeVisual(direction: Vec2, angle: number): { axis: 'x' | 'y'; 
 }
 
 export function followCameraPose(position: Vec2, angle: number, aspect: number) {
-  const fit = Math.min(1.45, Math.max(1, .95 / aspect));
+  const fit = Math.min(CAMERA.portraitMaxDistanceScale, Math.max(1, .95 / aspect));
   const x = Math.sin(angle), z = Math.cos(angle);
   return {
     position: { x: position.x + x * CAMERA.followDistance * fit, y: CAMERA.actorHeight + CAMERA.followHeight, z: position.z + z * CAMERA.followDistance * fit },

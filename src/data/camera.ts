@@ -7,6 +7,7 @@ export const CAMERA = {
   maxAngularSpeed: 6,
   centerDeadZone: 1.4,
   followDistance: 6,
+  portraitMaxDistanceScale: 1.65,
   followHeight: 3,
   actorHeight: 1,
 } as const;
