@@ -62,12 +62,13 @@ export function createEffects() {
       tone(1450,480,start,.13,.18,'square');tone(2270,820,start+.012,.16,.13,'triangle');return;
     }
     if(effect==='attack'){
-      // A loud, bright pop: sharp broadband crack with a high metallic snap.
-      noise(start,.11,3400,1800,3.2,'highpass',.001);
-      noise(start,.16,6500,2800,2.1,'bandpass',.001);
-      tone(3200,2100,start,.045,.55,'square');
-      noise(start+.012,.045,5200,2600,.95,'highpass',.001);
-      noise(start+.035,.07,4200,2000,.55,'highpass',.001);return;
+      // Critical-hit sting: bright metallic partials over a tight cracking impact.
+      tone(2800,2450,start,.23,1.05,'triangle');
+      tone(4310,3950,start,.16,.65);
+      tone(6170,5600,start+.004,.10,.38);
+      noise(start+.008,.065,3200,1800,2.4,'highpass',.001);
+      noise(start+.008,.10,4400,1500,1.35,'bandpass',.001);
+      tone(980,520,start+.008,.055,.45,'triangle');return;
     }
     if(effect==='dodge'){
       // Air-pressure burst followed by a broad, rushing wind tail.
