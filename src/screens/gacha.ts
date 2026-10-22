@@ -15,7 +15,7 @@ export function gachaScreen(state: GachaState, revealing: boolean): string {
     </aside><div class="draw-area">
     ${completed ? `<div class="completion"><p class="eyebrow">書き上がり</p><p class="complete-word">${state.selected.map(char => char.char).join('')}</p>
       <p role="status">${filler ? '不足分を数字「1」で補填しました。数字が含まれるため、試合開始時から合計1点です。' : '4文字を取得したため、抽選は終了です。'}</p>
-      <p class="development">ここまでが今回の実装範囲です。試合画面は次の区切りで追加します。</p>
+      <p>試合へ進みます。</p>
       <button data-action="start">もう一度書く</button></div>` : `
       <div class="draw-paper ${revealing ? 'revealing' : ''}">
         <p class="draw-caption">${revealing ? '墨をひらく' : pending ? 'この一字を、書きますか。' : '次の一字との出会い'}</p>
