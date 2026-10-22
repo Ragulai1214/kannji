@@ -89,13 +89,22 @@ export function playBattle(root: HTMLElement, battle: Battle, onComplete:(result
     root.querySelector<HTMLElement>('#turn-label')!.hidden=true;
     root.querySelector<HTMLElement>('.score-details')!.hidden=true;
     stage.tabIndex=0;stage.focus({preventScroll:true});
-    status.textContent='準備完了。操作を確認し「戦闘開始」を押してください。';
+    status.textContent='準備完了。Enterキーまたは「戦闘開始」で始めます。';
     let started=false,manualPaused=true,hidden=document.hidden,last=performance.now(),accumulator=0,finished=false;
     const pauseButton=root.querySelector<HTMLButtonElement>('[data-combat="pause"]')!;
     pauseButton.textContent='戦闘開始';
-    const setPause=():void=>{controls.clear();accumulator=0;last=performance.now();pauseButton.textContent=manualPaused?(started?'再開':'戦闘開始'):'一時停止';if(!started)status.textContent='準備完了。「戦闘開始」で始めます。';else if(manualPaused||hidden)status.textContent='一時停止中';else status.textContent='相手の予備動作を見て攻撃・回転回避！';};
+    const setPause=():void=>{controls.clear();accumulator=0;last=performance.now();pauseButton.textContent=manualPaused?(started?'再開':'戦闘開始'):'一時停止';if(!started)status.textContent='準備完了。Enterキーまたは「戦闘開始」で始めます。';else if(manualPaused||hidden)status.textContent='一時停止中';else status.textContent='相手の予備動作を見て攻撃・回転回避！';};
     pauseButton.addEventListener('click',()=>{started=true;manualPaused=!manualPaused;setPause();},{signal});
-    window.addEventListener('keydown',event=>{if(event.code==='Escape'&&started){event.preventDefault();manualPaused=!manualPaused;setPause();}},{signal});
+    window.addEventListener('keydown',event=>{
+      if(event.isComposing||finished||hidden)return;
+      const target=event.target as Element|null;
+      if(target?.closest('input,textarea,select,[contenteditable="true"]'))return;
+      if(event.key==='Enter'&&!started){
+        if(target?.closest('button,a')&&target!==pauseButton)return;
+        event.preventDefault();if(event.repeat)return;
+        started=true;manualPaused=false;setPause();stage.focus({preventScroll:true});
+      }else if(event.code==='Escape'&&started&&!event.repeat){event.preventDefault();manualPaused=!manualPaused;setPause();}
+    },{signal});
     document.addEventListener('visibilitychange',()=>{hidden=document.hidden;setPause();},{signal});
     const updateHUD=():void=>{
       for(const side of ['enemy','player'] as const){const actor=state.actors[side];root.querySelector<HTMLElement>(`#${side}-hp`)!.textContent=number(actor.hp);root.querySelector<HTMLProgressElement>(`#${side}-bar`)!.value=actor.hp;}
