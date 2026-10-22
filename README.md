@@ -1,6 +1,6 @@
 # kannji
 
-ブラウザ向け漢字バトルゲーム。名称は仮です。
+正式タイトルは「四字熟語バトル」。ブラウザ向けの漢字バトルゲームです。
 仕様は [docs/specification.md](docs/specification.md) を参照してください。
 
 ## 現在の状態
