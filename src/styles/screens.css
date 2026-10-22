@@ -219,3 +219,5 @@ a:focus-visible { outline: 3px solid #b06522; outline-offset: 3px; }
   .action-live .fighter-score strong { font-size:1rem; }
   .action-live .action-hud { padding:4px 0; }
 }
+.player-overhead { position: absolute; transform: translate(-50%, -100%); display: flex; flex-direction: column; align-items: center; color: #10465c; font-weight: 700; pointer-events: none; text-shadow: 0 0 3px #fff, 0 0 6px #fff; z-index: 2; line-height: 1.2; }
+.player-overhead[hidden] { display: none; }

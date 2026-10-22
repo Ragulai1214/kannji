@@ -16,10 +16,13 @@ export function cameraRelativeInput(input: ActionInput, angle: number): ActionIn
   return { ...input, x: input.x * cos + input.z * sin, z: -input.x * sin + input.z * cos };
 }
 
-export function dodgeRotationY(age: number, duration: number, direction: Vec2, angle: number): number {
-  const progress = Math.max(0, Math.min(1, age / duration));
+export function dodgeVisual(direction: Vec2, angle: number): { axis: 'x' | 'y'; sign: number; angle: number } {
   const lateral = direction.x * Math.cos(angle) - direction.z * Math.sin(angle);
-  return (lateral < 0 ? -1 : 1) * progress * Math.PI * 2;
+  const depth = direction.x * Math.sin(angle) + direction.z * Math.cos(angle);
+  // Diagonal ties use the front/back roll. Freeze this choice at dodge start.
+  return Math.abs(depth) + 1e-8 >= Math.abs(lateral)
+    ? { axis: 'x', sign: depth > 0 ? -1 : 1, angle }
+    : { axis: 'y', sign: lateral < 0 ? -1 : 1, angle };
 }
 
 export function followCameraPose(position: Vec2, angle: number, aspect: number) {

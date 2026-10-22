@@ -130,7 +130,10 @@ export function playBattle(root: HTMLElement, battle: Battle, onComplete:(result
               label.style.left=`${target.x-rect.left}px`;label.style.top=`${target.y-rect.top}px`;label.textContent=`−${number(event.damage)}`;
               label.animate(reduced?[{opacity:1},{opacity:0}]:[{opacity:1,transform:'translate(-50%,-70%) scale(1.2)'},{opacity:0,transform:'translate(-50%,-160%)'}],{duration:500,fill:'forwards'});
               status.textContent=`${event.side==='player'?'あなた':'相手'}に${number(event.damage)}ダメージ。`;
-            }else if(event.side==='player'){audio.play(event.kind==='dodge'?'reveal':'draw');}
+            }else{
+              if(event.kind==='dodge')visual!.dodge(event.side);
+              if(event.side==='player')audio.play(event.kind==='dodge'?'reveal':'draw');
+            }
           }
         }
       }

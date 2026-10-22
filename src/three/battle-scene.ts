@@ -1,11 +1,13 @@
-import { AdditiveBlending, AmbientLight, BufferGeometry, CanvasTexture, CircleGeometry, Color, CylinderGeometry, DirectionalLight, DoubleSide, Float32BufferAttribute, Fog, Group, LineBasicMaterial, LineSegments, Mesh, MeshBasicMaterial, MeshStandardMaterial, PerspectiveCamera, PlaneGeometry, Points, PointsMaterial, RingGeometry, Scene, TorusGeometry, Vector3, WebGLRenderer } from 'three';
+import { AdditiveBlending, AmbientLight, Box3, BufferGeometry, CanvasTexture, CircleGeometry, Color, CylinderGeometry, DirectionalLight, DoubleSide, Float32BufferAttribute, Fog, Group, LineBasicMaterial, LineSegments, Mesh, MeshBasicMaterial, MeshStandardMaterial, PerspectiveCamera, PlaneGeometry, Points, PointsMaterial, RingGeometry, Scene, TorusGeometry, Vector3, WebGLRenderer } from 'three';
 import { FontLoader } from 'three/addons/loaders/FontLoader.js';
 import { KanjiModels } from './kanji-model';
 import { RARITIES } from '../data/rarities.ts';
 import { PRESENTATION } from '../data/presentation.ts';
 import { ACTION } from '../data/action.ts';
 import { CAMERA } from '../data/camera.ts';
-import { cameraRelativeInput, dodgeRotationY, followCameraPose, followOrbit } from '../game/camera.ts';
+import { cameraRelativeInput, dodgeVisual, followCameraPose, followOrbit } from '../game/camera.ts';
+import { createBattleEffects } from './battle-effects.ts';
+import type { DodgeVisual } from './battle-effects.ts';
 import { invulnerable } from '../game/action.ts';
 import type { ActionInput, ActionState } from '../game/action.ts';
 import type { Battle } from '../screens/result.ts';
@@ -17,6 +19,7 @@ export interface BattleVisual {
   startAction(state:ActionState):void;
   movement(input:ActionInput):ActionInput;
   impact(side:Side):void;
+  dodge(side:Side):void;
   finish(outcome:Outcome):void;
   dispose():void;
 }
@@ -37,8 +40,11 @@ export async function createBattleScene(host:HTMLElement,battle:Battle,reduced:b
   renderer.setPixelRatio(Math.min(devicePixelRatio,2));
   renderer.domElement.setAttribute('aria-label','円形闘技場で戦う四文字と、独立して漂う4字の墨文字');
   host.append(renderer.domElement);
+  const playerLabel=document.createElement('div');playerLabel.className='player-overhead';playerLabel.innerHTML='<span>あなた</span><span aria-hidden="true">↓</span>';playerLabel.hidden=true;host.append(playerLabel);
   const scene=new Scene();scene.background=new Color(0xe8e2d5);scene.fog=new Fog(0xe8e2d5,30,85);
   const camera=new PerspectiveCamera(CAMERA.fieldOfView,1,.1,150);
+  const effects=createBattleEffects(scene,reduced);
+  const dodges:Record<Side,DodgeVisual>={player:{axis:'x',sign:1,angle:0},enemy:{axis:'x',sign:1,angle:0}};
   const light=new DirectionalLight(0xfff2d9,3);light.position.set(-5,12,8);
   scene.add(light,new AmbientLight(0xffffff,1.8),camera);
   const models=new KanjiModels(font);
@@ -96,7 +102,7 @@ export async function createBattleScene(host:HTMLElement,battle:Battle,reduced:b
   const pulses={player:{time:-10000,index:-1,rainbow:false},enemy:{time:-10000,index:-1,rainbow:false}};
   let action:ActionState|undefined,burstTime=-10000,finishTime=0,outcome:Outcome|undefined;
   let orbit=0,viewAngle=0,lastFrame=performance.now();
-  const verticalAxis=new Vector3(0,1,0);
+  const rotationAxis=new Vector3(),labelPosition=new Vector3(),labelCorner=new Vector3(),playerBounds=new Box3();
   const resize=():void=>{renderer.setSize(host.clientWidth,host.clientHeight,false);camera.aspect=host.clientWidth/host.clientHeight;camera.updateProjectionMatrix();};
   const observer=new ResizeObserver(resize);observer.observe(host);resize();
   renderer.setAnimationLoop(()=>{
@@ -117,7 +123,11 @@ export async function createBattleScene(host:HTMLElement,battle:Battle,reduced:b
       const group=groups[side],actor=action?.actors[side],pulse=pulses[side];
       group.position.set(actor?.position.x??0,(side==='enemy'?1.55:1)+(reduced?0:Math.sin(time*2+(side==='enemy'?2:0))*.06),actor?.position.z??(side==='player'?4:-4));
       group.quaternion.copy(camera.quaternion);
-      if(actor?.mode==='dodge'&&!reduced){group.rotateOnWorldAxis(verticalAxis,dodgeRotationY(actor.age,ACTION.dodge.duration,actor.facing,viewAngle));}
+      if(actor?.mode==='dodge'&&!reduced){
+        const dodge=dodges[side];
+        if(dodge.axis==='x')rotationAxis.set(Math.cos(dodge.angle),0,-Math.sin(dodge.angle));else rotationAxis.set(0,1,0);
+        group.rotateOnWorldAxis(rotationAxis,dodge.sign*Math.min(1,actor.age/ACTION.dodge.duration)*Math.PI*2);
+      }
       if(actor?.mode==='windup'&&!reduced)group.scale.setScalar(.8*(1+Math.sin(time*38)*.035));else group.scale.setScalar(.8);
       markers[side].position.set(group.position.x,.03,group.position.z);
       const markerMaterial=markers[side].material as MeshBasicMaterial;
@@ -136,6 +146,20 @@ export async function createBattleScene(host:HTMLElement,battle:Battle,reduced:b
         if(loser){group.position.y+=t*4;group.position.x+=(side==='enemy'?-1:1)*t*10;group.rotateZ(t*3);}
       }
     }
+    if(action){
+      effects.update(action);
+      camera.updateMatrixWorld();
+      labelPosition.copy(groups.player.position).project(camera);
+      playerBounds.setFromObject(groups.player);
+      let labelTop=host.clientHeight;
+      for(let i=0;i<8;i++){
+        labelCorner.set(i&1?playerBounds.max.x:playerBounds.min.x,i&2?playerBounds.max.y:playerBounds.min.y,i&4?playerBounds.max.z:playerBounds.min.z).project(camera);
+        labelTop=Math.min(labelTop,(1-labelCorner.y)*host.clientHeight/2);
+      }
+      playerLabel.hidden=labelPosition.z < -1||labelPosition.z>1||Math.abs(labelPosition.x)>1||Math.abs(labelPosition.y)>1;
+      playerLabel.style.left=`${(labelPosition.x+1)*host.clientWidth/2}px`;
+      playerLabel.style.top=`${Math.max(42,labelTop-6)}px`;
+    }
     inks.forEach((ink,i)=>{const base=inkPositions[i];ink.position.set(base[0]+(reduced?0:Math.sin(time*.2+i)*.35),base[1]+(reduced?0:Math.cos(time*.3+i)*.4),base[2]);const towardCamera=(base[0]*Math.sin(orbit)+base[2]*Math.cos(orbit))/Math.hypot(base[0],base[2]);const frontFade=towardCamera>.25?.25:1;inkMaterials[i].opacity=(reduced?.2:.18+(Math.sin(time*.45+i*1.7)+1)*.045)*frontFade;});
     const burst=(now-burstTime)/500;ring.visible=sparks.visible=!reduced&&burst>=0&&burst<1;
     if(ring.visible){ring.quaternion.copy(camera.quaternion);ring.scale.setScalar(1+burst*4);ringMaterial.opacity=1-burst;sparkMaterial.opacity=1-burst;const positions=sparkGeometry.attributes.position;for(let i=0;i<24;i++){const a=i*Math.PI/12,r=burst*(1.1+i%3*.25);positions.setXYZ(i,Math.cos(a)*r,Math.sin(a)*r,(i%3-1)*burst*.5);}positions.needsUpdate=true;}
@@ -145,6 +169,7 @@ export async function createBattleScene(host:HTMLElement,battle:Battle,reduced:b
   const dispose=():void=>{
     if(disposed)return;disposed=true;observer.disconnect();renderer.setAnimationLoop(null);
     materials.forEach(m=>m.dispose());models.dispose();textures.forEach(t=>t.dispose());inkMaterials.forEach(m=>m.dispose());markerMaterials.forEach(m=>m.dispose());
+    effects.dispose();playerLabel.remove();
     for(const resource of [groundGeometry,groundMaterial,baseGeometry,baseMaterial,columnGeometry,columnMaterial,inkGeometry,floorGeometry,floorMaterial,rimGeometry,rimMaterial,innerGeometry,innerMaterial,lineGeometry,lineMaterial,markerGeometry,ringGeometry,ringMaterial,sparkGeometry,sparkMaterial])resource.dispose();
     renderer.dispose();renderer.domElement.remove();signal.removeEventListener('abort',dispose);
   };
@@ -153,7 +178,8 @@ export async function createBattleScene(host:HTMLElement,battle:Battle,reduced:b
     startAction(state){action=state;},
     movement(input){return cameraRelativeInput(input,viewAngle);},
     source(side,index){scene.updateMatrixWorld(true);camera.updateMatrixWorld();const object=index===undefined?groups[side]:groups[side].children[index];const position=object.getWorldPosition(new Vector3()).project(camera),rect=host.getBoundingClientRect();return{x:rect.left+(position.x+1)*rect.width/2,y:rect.top+(1-position.y)*rect.height/2};},
-    impact(side){burstTime=performance.now();groups[side].getWorldPosition(ring.position);sparks.position.copy(ring.position);pulses[side]={time:burstTime,index:-1,rainbow:false};},
+    impact(side){burstTime=performance.now();groups[side].getWorldPosition(ring.position);sparks.position.copy(ring.position);if(action)effects.hit(side,action);pulses[side]={time:burstTime,index:-1,rainbow:false};},
+    dodge(side){if(!action)return;dodges[side]=dodgeVisual(action.actors[side].facing,viewAngle);effects.dodge(side,dodges[side]);},
     pulse(side,step){pulses[side]={time:performance.now(),index:step.index??-1,rainbow:step.rarity==='UR'};const rarity=RARITIES.find(r=>r.id===step.rarity);groups[side].children.forEach((child,index)=>{if(step.index!==undefined&&index!==step.index)return;const material=(child as Mesh).material as MeshStandardMaterial;material.emissive.set(rarity&&rarity.id!=='UR'?rarity.color:'#d59b44');if(rarity?.id==='UR')material.color.setHSL(index/4,.7,.5);else if(rarity)material.color.set(rarity.color);});},
     finish(result){outcome=result;finishTime=performance.now();},dispose,
   };

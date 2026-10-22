@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { followOrbit, cameraRelativeInput, dodgeRotationY, followCameraPose } from '../src/game/camera.ts';
+import { followOrbit, cameraRelativeInput, dodgeVisual, followCameraPose } from '../src/game/camera.ts';
 import { CAMERA } from '../src/data/camera.ts';
 const close=(a,b)=>assert.ok(Math.abs(a-b)<1e-8,`${a} != ${b}`);
 test('camera input follows the view at each quarter turn without changing speed or action flags',()=>{
@@ -32,12 +32,14 @@ test('center dead zone avoids input reversal and settled camera faces center fro
     close(pose.target.x,0);close(pose.target.z,0);
   }
 });
-test('dodge makes a full Y-axis turn with direction relative to the camera',()=>{
-  close(dodgeRotationY(0,.48,{x:1,z:0},0),0);
-  close(dodgeRotationY(.12,.48,{x:1,z:0},0),Math.PI/2);
-  close(dodgeRotationY(.48,.48,{x:1,z:0},0),Math.PI*2);
-  close(dodgeRotationY(.48,.48,{x:-1,z:0},0),-Math.PI*2);
-  close(dodgeRotationY(.48,.48,{x:0,z:-1},Math.PI/2),Math.PI*2);
+test('dodge chooses X for front/back and Y for left/right at every camera angle',()=>{
+  for(const angle of [0,Math.PI/2,Math.PI,-Math.PI/2,.7]){
+    for(const [x,z,axis,sign] of [[0,-1,'x',1],[0,1,'x',-1],[1,0,'y',1],[-1,0,'y',-1],[.4,-1,'x',1],[1,-.4,'y',1],[1,1,'x',-1]]){
+      const direction=cameraRelativeInput({x,z,attack:false,dodge:true},angle);
+      const visual=dodgeVisual(direction,angle);
+      assert.equal(visual.axis,axis);assert.equal(visual.sign,sign);close(visual.angle,angle);
+    }
+  }
 });
 test('close camera stays above and behind the player at all orbit angles and portrait ratios',()=>{
   for(const aspect of [1.8,.5])for(const angle of [0,Math.PI/2,Math.PI,-Math.PI/2]){
