@@ -41,7 +41,7 @@ export function createEffects() {
     gain.gain.setValueAtTime(0,time);gain.gain.linearRampToValueAtTime(level,time+.006);gain.gain.exponentialRampToValueAtTime(.0001,time+length);
     oscillator.connect(gain);gain.connect(output());track(oscillator,[gain],time,time+length+.02);
   }
-  function noise(time:number,length:number,from:number,to:number,level:number,type:BiquadFilterType='bandpass'):void {
+  function noise(time:number,length:number,from:number,to:number,level:number,type:BiquadFilterType='bandpass',attack=.025):void {
     if(voices.size>=SOUND.maxVoices)return;
     if(!noiseBuffer){
       noiseBuffer=context!.createBuffer(1,context!.sampleRate,context!.sampleRate);
@@ -50,7 +50,7 @@ export function createEffects() {
     }
     const source=context!.createBufferSource(),filter=context!.createBiquadFilter(),gain=context!.createGain();source.buffer=noiseBuffer;
     filter.type=type;filter.Q.value=.8;filter.frequency.setValueAtTime(from,time);filter.frequency.exponentialRampToValueAtTime(to,time+length);
-    gain.gain.setValueAtTime(0,time);gain.gain.linearRampToValueAtTime(level,time+Math.min(.025,length*.15));gain.gain.exponentialRampToValueAtTime(.0001,time+length);
+    gain.gain.setValueAtTime(0,time);gain.gain.linearRampToValueAtTime(level,time+Math.min(attack,length*.15));gain.gain.exponentialRampToValueAtTime(.0001,time+length);
     source.connect(filter);filter.connect(gain);gain.connect(output());track(source,[filter,gain],time,time+length+.02);
   }
   function play(effect:Effect):void {
@@ -62,11 +62,20 @@ export function createEffects() {
       tone(1450,480,start,.13,.18,'square');tone(2270,820,start+.012,.16,.13,'triangle');return;
     }
     if(effect==='attack'){
-      noise(start,.24,450,5200,1.15);tone(170,720,start,.2,.32,'triangle');return;
+      // A dry crack, compressed body and tiny secondary fractures.
+      noise(start,.055,2300,1100,1.7,'highpass',.001);
+      noise(start,.14,3600,300,1.25,'lowpass',.002);
+      tone(190,48,start,.12,.9,'triangle');
+      noise(start+.014,.025,4200,2200,.5,'highpass',.001);
+      noise(start+.033,.035,3200,1400,.3,'highpass',.001);return;
     }
     if(effect==='dodge'){
-      noise(start,.28,350,2600,.95);noise(start+.1,.35,3200,450,.85);
-      tone(280,900,start,.25,.2,'triangle');tone(950,220,start+.16,.3,.2);return;
+      // Air-pressure burst followed by a broad, rushing wind tail.
+      noise(start,.065,1700,220,.95,'lowpass',.001);
+      noise(start,.12,3500,1600,1.15,'highpass',.002);
+      noise(start+.012,.34,2400,380,1.6,'bandpass',.006);
+      noise(start+.065,.26,4200,1100,.65,'highpass',.015);
+      tone(95,32,start,.1,.45);return;
     }
     const celebratory=effect==='win'||effect==='rare'||effect==='start';
     (NOTES[effect]??[]).forEach((frequency,index)=>{
