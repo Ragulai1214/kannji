@@ -1,0 +1,31 @@
+@font-face {
+  font-family: 'Noto Serif JP';
+  src: url('/fonts/NotoSerifJP-Bold.ttf') format('truetype');
+  font-weight: 700;
+  font-style: normal;
+  font-display: swap;
+}
+
+:root {
+  font-family: system-ui, sans-serif;
+  color: #29281f;
+  background: #f4eedf;
+  line-height: 1.8;
+  font-synthesis: none;
+}
+
+* { box-sizing: border-box; }
+body { margin: 0; }
+#app { min-height: 100svh; display: grid; place-items: center; padding: 24px; }
+.setup { width: min(100%, 720px); padding: clamp(24px, 5vw, 56px); border: 1px solid #b9ad95; background: #fffaf0; }
+.eyebrow, .note { color: #655f51; font-size: 0.85rem; }
+h1, .sample { font-family: 'Noto Serif JP', serif; font-weight: 700; }
+h1 { font-size: clamp(1.8rem, 5vw, 2.8rem); margin: 8px 0; }
+.sample { font-size: clamp(2rem, 8vw, 4rem); margin: 20px 0; }
+dl { border-top: 1px solid #d8ceba; padding-top: 16px; }
+dl div { display: grid; grid-template-columns: 100px 1fr; gap: 8px; margin: 8px 0; }
+dd { margin: 0; overflow-wrap: anywhere; }
+@media (max-width: 480px) {
+  #app { padding: 12px; }
+  dl div { grid-template-columns: 1fr; gap: 0; }
+}
