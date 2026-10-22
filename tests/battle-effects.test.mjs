@@ -25,6 +25,18 @@ test('tornado shares frozen dodge axis, follows actor, disappears after dodge an
     const tornado=scene.children.find(o=>o.isGroup&&o.visible);assert.ok(tornado);assert.equal(tornado.position.x,2);assert.equal(tornado.position.z,3);
     const pole=new Vector3(0,1,0).applyQuaternion(tornado.quaternion);
     if(axis==='x'){assert.ok(Math.abs(pole.z+1)<1e-8);assert.ok(Math.abs(pole.y)<1e-8);}else assert.ok(Math.abs(pole.y-1)<1e-8);
+    const rings=tornado.children[0].children.filter(o=>o.isMesh&&o.visible);
+    if(axis==='x'){
+      assert.equal(rings.length,5);
+      assert.ok(rings[2].scale.x>rings[1].scale.x&&rings[1].scale.x>rings[0].scale.x);
+      assert.ok(Math.abs(rings[0].scale.x-rings[4].scale.x)<1e-8);
+      assert.ok(Math.abs(rings[1].scale.x-rings[3].scale.x)<1e-8);
+      const spiral=tornado.children[0].children.find(o=>o.isLine).geometry.attributes.position;
+      const radius=i=>Math.hypot(spiral.getX(i),spiral.getZ(i));
+      assert.ok(radius(90)>radius(45)&&radius(45)>radius(0));assert.ok(Math.abs(radius(0)-radius(180))<1e-6);
+    }else{
+      assert.equal(rings.length,4);assert.ok(rings.every((r,i)=>!i||r.scale.x>rings[i-1].scale.x));
+    }
     actor.mode='recovery';effects.update(state);assert.equal(tornado.visible,false);effects.dispose();
   }
   const scene=new Scene(),effects=createBattleEffects(scene,true),state=createAction(stats,stats);state.actors.player.mode='dodge';state.actors.player.age=.2;

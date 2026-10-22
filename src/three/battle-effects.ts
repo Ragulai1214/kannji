@@ -25,6 +25,7 @@ export function createBattleEffects(scene: Scene, reduced: boolean) {
     const material=new MeshBasicMaterial({color:0x58d9ff,transparent:true,opacity:.7,depthWrite:false});
     const lineMaterial=new LineBasicMaterial({color:0x58d9ff,transparent:true,opacity:.7,depthWrite:false});
     const geometries:BufferGeometry[]=[];
+    const rings:Mesh[]=[];
     for(let strand=0;strand<3;strand++){
       const vertices:number[]=[];
       for(let i=0;i<=180;i++){
@@ -33,10 +34,10 @@ export function createBattleEffects(scene: Scene, reduced: boolean) {
       }
       const geometry=new BufferGeometry();geometry.setAttribute('position',new Float32BufferAttribute(vertices,3));geometries.push(geometry);spin.add(new Line(geometry,lineMaterial));
     }
-    for(let i=0;i<4;i++){
-      const ring=new Mesh(ringGeometry,material);ring.rotation.x=Math.PI/2;ring.position.y=(i/3-.5)*1.8;ring.scale.setScalar(.7+i/3*.8);spin.add(ring);
+    for(let i=0;i<5;i++){
+      const ring=new Mesh(ringGeometry,material);ring.rotation.x=Math.PI/2;ring.position.y=(i/3-.5)*1.8;ring.scale.setScalar(.7+i/3*.8);ring.visible=i<4;spin.add(ring);rings.push(ring);
     }
-    return {side,group,spin,material,lineMaterial,geometries,visual:{axis:'y',sign:1,angle:0} as DodgeVisual};
+    return {side,group,spin,material,lineMaterial,geometries,rings,visual:{axis:'y',sign:1,angle:0} as DodgeVisual};
   });
   return {
     hit(side:Side,state:ActionState){
@@ -44,7 +45,23 @@ export function createBattleEffects(scene: Scene, reduced: boolean) {
       const burst=bursts[next++%bursts.length],actor=state.actors[side];
       burst.start=state.time;burst.seed=next*.7;burst.points.position.set(actor.position.x,side==='player'?1:1.55,actor.position.z);
     },
-    dodge(side:Side,visual:DodgeVisual){tornadoes.find(t=>t.side===side)!.visual=visual;},
+    dodge(side:Side,visual:DodgeVisual){
+      const tornado=tornadoes.find(t=>t.side===side)!;tornado.visual=visual;
+      const radius=(t:number):number=>.7+.8*(visual.axis==='x'?Math.sin(Math.PI*t):t);
+      tornado.geometries.forEach((geometry,strand)=>{
+        const positions=geometry.attributes.position;
+        for(let i=0;i<=180;i++){
+          const t=i/180,a=t*Math.PI*6+strand*Math.PI*2/3,r=radius(t);
+          positions.setXYZ(i,Math.cos(a)*r,(t-.5)*1.8,Math.sin(a)*r);
+        }
+        positions.needsUpdate=true;geometry.computeBoundingSphere();
+      });
+      const count=visual.axis==='x'?5:4;
+      tornado.rings.forEach((ring,i)=>{
+        ring.visible=i<count;if(!ring.visible)return;
+        const t=i/(count-1);ring.position.y=(t-.5)*1.8;ring.scale.setScalar(radius(t));
+      });
+    },
     update(state:ActionState){
       bursts.forEach(b=>{
         const age=state.time-b.start;b.points.visible=!reduced&&age>=0&&age<.55;if(!b.points.visible)return;
