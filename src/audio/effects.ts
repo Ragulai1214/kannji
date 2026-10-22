@@ -62,12 +62,12 @@ export function createEffects() {
       tone(1450,480,start,.13,.18,'square');tone(2270,820,start+.012,.16,.13,'triangle');return;
     }
     if(effect==='attack'){
-      // A dry crack, compressed body and tiny secondary fractures.
-      noise(start,.055,2300,1100,1.7,'highpass',.001);
-      noise(start,.14,3600,300,1.25,'lowpass',.002);
-      tone(190,48,start,.12,.9,'triangle');
-      noise(start+.014,.025,4200,2200,.5,'highpass',.001);
-      noise(start+.033,.035,3200,1400,.3,'highpass',.001);return;
+      // A loud, bright pop: sharp broadband crack with a high metallic snap.
+      noise(start,.11,3400,1800,3.2,'highpass',.001);
+      noise(start,.16,6500,2800,2.1,'bandpass',.001);
+      tone(3200,2100,start,.045,.55,'square');
+      noise(start+.012,.045,5200,2600,.95,'highpass',.001);
+      noise(start+.035,.07,4200,2000,.55,'highpass',.001);return;
     }
     if(effect==='dodge'){
       // Air-pressure burst followed by a broad, rushing wind tail.
