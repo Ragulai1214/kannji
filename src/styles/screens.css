@@ -17,7 +17,8 @@ a:focus-visible { outline: 3px solid #b06522; outline-offset: 3px; }
 .intro { margin-bottom: 32px; }
 .home-actions { display: flex; gap: 16px; flex-wrap: wrap; justify-content: center; }
 .development { font-size: .85rem; color: #746650; padding: 12px; background: #f1e9d7; }
-.group-links { display: flex; flex-wrap: wrap; gap: 12px 20px; padding-block: 16px; border-block: 1px solid #d8ceba; }
+.group-links { display: flex; flex-wrap: wrap; gap: 4px 16px; padding-block: 12px; border-block: 1px solid #d8ceba; }
+.group-links a { display: inline-flex; align-items: center; min-height: 44px; }
 .catalog-group { margin-block: 32px; scroll-margin-top: 16px; }
 .catalog-group h2 { border-bottom: 1px solid #b9ad95; padding-bottom: 8px; }
 .catalog-group h2 span { font-size: .85rem; font-weight: 400; color: #746650; margin-left: 16px; }
@@ -88,11 +89,26 @@ a:focus-visible { outline: 3px solid #b06522; outline-offset: 3px; }
 .filler-notice { color: #8d3d29; }
 .opponent-result { color: #655f51; overflow-wrap: anywhere; }
 @media (max-width: 700px) {
-  .arena { height: 440px; }
+  .arena { height: clamp(340px, 52svh, 440px); }
   .fighter { min-width: 140px; padding: 6px 10px; }
   .fighter.enemy { top: 8px; left: 8px; }
   .fighter.player { bottom: 8px; right: 8px; }
   .fighter-word { font-size: 22px; }
   .fighter-score strong { font-size: 1.3rem; }
   .score-details p { grid-template-columns: 48px 1fr; }
+  .battle-screen .screen-header { margin-bottom: 12px; }
+  .battle-screen #battle-status { margin-block: 10px; }
+  .battle-screen .eyebrow { margin-top: 0; }
+}
+@media (max-width: 380px) {
+  .screen { padding: 16px 12px; }
+  .screen-header { gap: 8px; }
+  .screen-header h1 { font-size: 1.65rem; }
+  .title-seal { font-size: 38px; }
+  .home-actions { gap: 10px; }
+  .gacha-layout { gap: 12px; }
+  .draw-character { font-size: 72px; }
+  .draw-paper { padding: 12px; }
+  .fighter { min-width: 120px; }
+  .fighter-word { font-size: 20px; }
 }

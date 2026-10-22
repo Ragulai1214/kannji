@@ -2,6 +2,7 @@ import { AmbientLight, Color, DirectionalLight, Mesh, MeshStandardMaterial, Pers
 import { FontLoader } from 'three/addons/loaders/FontLoader.js';
 import { KanjiModels } from './kanji-model';
 import { RARITIES } from '../data/rarities.ts';
+import { PRESENTATION } from '../data/presentation.ts';
 import type { Battle } from '../screens/result.ts';
 import type { ScoreStep } from '../game/types.ts';
 
@@ -13,9 +14,20 @@ export interface BattleVisual {
 }
 
 export async function createBattleScene(host: HTMLElement, battle: Battle, reduced: boolean, signal: AbortSignal): Promise<BattleVisual | undefined> {
-  const response = await fetch(`${import.meta.env.BASE_URL}fonts/kannji-outline.typeface.json`, { signal });
-  if (!response.ok) throw new Error(`フォント読み込み失敗: ${response.status}`);
-  const font = new FontLoader().parse(await response.json());
+  const loading = new AbortController();
+  const cancelLoading = (): void => loading.abort();
+  signal.addEventListener('abort', cancelLoading, { once: true });
+  const timeout = setTimeout(cancelLoading, PRESENTATION.modelLoadTimeoutMs);
+  let font;
+  try {
+    if (signal.aborted) return;
+    const response = await fetch(`${import.meta.env.BASE_URL}fonts/kannji-outline.typeface.json`, { signal: loading.signal });
+    if (!response.ok) throw new Error(`フォント読み込み失敗: ${response.status}`);
+    font = new FontLoader().parse(await response.json());
+  } finally {
+    clearTimeout(timeout);
+    signal.removeEventListener('abort', cancelLoading);
+  }
   if (signal.aborted) return;
   const renderer = new WebGLRenderer({ antialias: true, alpha: true });
   renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
@@ -44,12 +56,15 @@ export async function createBattleScene(host: HTMLElement, battle: Battle, reduc
   let finishTime = 0;
   let outcome: Battle['outcome'] | undefined;
   let compact = false;
+  let verticalOffset = .65;
   const resize = (): void => {
     const width = host.clientWidth, height = host.clientHeight;
     compact = width < 600;
     renderer.setSize(width, height, false);
     camera.aspect = width / height;
     camera.position.z = Math.max(7, 3.3 / (Math.tan(35 * Math.PI / 360) * camera.aspect));
+    // Keep the glyphs clear of the score panels on short portrait screens.
+    verticalOffset = compact ? camera.position.z * Math.tan(35 * Math.PI / 360) * .24 : .65;
     camera.updateProjectionMatrix();
   };
   const observer = new ResizeObserver(resize);
@@ -61,7 +76,7 @@ export async function createBattleScene(host: HTMLElement, battle: Battle, reduc
       const direction = side === 'player' ? 1 : -1;
       const pulse = pulses[side];
       const strength = reduced ? 0 : Math.max(0, 1 - (now - pulse.time) / 500);
-      group.position.set(direction * .2, -direction * (compact ? 1.3 : .65) + (reduced ? 0 : Math.sin(now / 800 + direction) * .035), 0);
+      group.position.set(direction * .2, -direction * verticalOffset + (reduced ? 0 : Math.sin(now / 800 + direction) * .035), 0);
       group.rotation.set(.05, -.06 * direction, Math.sin(now / 45) * strength * .035);
       group.children.forEach((child, index) => {
         const mesh = child as Mesh;
@@ -101,7 +116,8 @@ export async function createBattleScene(host: HTMLElement, battle: Battle, reduc
         if (pulse.index !== -1 && index !== pulse.index) return;
         const material = (child as Mesh).material as MeshStandardMaterial;
         material.emissive.copy(new Color(rarity && rarity.id !== 'UR' ? rarity.color : '#c08e51'));
-        if (rarity && rarity.id !== 'UR') material.color.set(rarity.color);
+        if (rarity?.id === 'UR' && reduced) material.color.setHSL(index / 4, .8, .45);
+        else if (rarity && rarity.id !== 'UR') material.color.set(rarity.color);
       });
     },
     finish(result) { outcome = result; finishTime = performance.now(); },

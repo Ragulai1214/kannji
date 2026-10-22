@@ -1,6 +1,6 @@
 @font-face {
   font-family: 'Noto Serif JP';
-  src: url('/fonts/NotoSerifJP-Bold.ttf') format('truetype');
+  src: url('/fonts/kannji-ui-bold.ttf') format('truetype');
   font-weight: 700;
   font-style: normal;
   font-display: swap;
@@ -15,7 +15,7 @@
 }
 
 * { box-sizing: border-box; }
-body { margin: 0; }
+body { margin: 0; overflow-wrap: anywhere; }
 #app { min-height: 100svh; display: grid; place-items: center; padding: 24px; }
 .setup { width: min(100%, 720px); padding: clamp(24px, 5vw, 56px); border: 1px solid #b9ad95; background: #fffaf0; }
 .eyebrow, .note { color: #655f51; font-size: 0.85rem; }

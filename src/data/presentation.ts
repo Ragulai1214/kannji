@@ -5,4 +5,5 @@ export const PRESENTATION = {
   scoreStepMs: 800,
   decisionMs: 700,
   finishMs: 1600,
+  modelLoadTimeoutMs: 12000,
 } as const;
