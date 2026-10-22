@@ -61,6 +61,10 @@ export function createEffects() {
       tone(320,78,start,.075,1.35,'square');
       tone(210,48,start+.035,.105,1.1,'triangle');
       noise(start+.048,.065,2200,650,.95,'bandpass',.001);
+      // High, slightly inharmonic partials ring above the punch like a critical metal hit.
+      tone(3400,3250,start+.006,.38,.8);
+      tone(5270,5030,start+.008,.27,.45);
+      tone(7130,6800,start+.01,.17,.2,'triangle');
       tone(170,38,start,.27,1.5,'triangle');tone(80,32,start,.34,.8);
       noise(start,.18,5000,1000,1.25,'highpass');noise(start,.24,1800,180,.9,'lowpass');
       tone(1450,480,start,.13,.18,'square');tone(2270,820,start+.012,.16,.13,'triangle');return;
