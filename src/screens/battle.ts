@@ -132,7 +132,7 @@ export function playBattle(root: HTMLElement, battle: Battle, onComplete:(result
               status.textContent=`${event.side==='player'?'あなた':'相手'}に${number(event.damage)}ダメージ。`;
             }else{
               if(event.kind==='dodge')visual!.dodge(event.side);
-              if(event.side==='player')audio.play(event.kind==='dodge'?'reveal':'draw');
+              if(event.side==='player')audio.play(event.kind==='dodge'?'dodge':'attack');
             }
           }
         }
