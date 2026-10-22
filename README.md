@@ -40,7 +40,19 @@ npm run preview
 
 公開用ファイルは `dist/` に生成されます。
 GitHub Pages向けのbaseは `/kannji/` に設定しています。
-Pages用Actionsと公開設定は後の区切りで追加します。
+Pages用Actionsは `.github/workflows/deploy.yml` にあります。公開手順は以下を参照してください。
+
+## GitHub Pagesへの公開
+
+1. GitHubの `Ragulai1214/kannji` を開き、Settings → Pages → Build and deployment → Sourceで **GitHub Actions** を選びます。
+2. 変更を手動でcommitし、`main`へpushします。
+3. Actions → **Deploy to GitHub Pages** のbuildとdeployが両方成功するまで待ちます。
+4. https://ragulai1214.github.io/kannji/ を開きます。以後はmainへのpushで自動更新されます。
+
+ActionsではNode.js 24で `npm ci` → テスト → 3Dフォント検証 → ビルドを実行し、成功した `dist/` のみ公開します。
+`dist/` をGitに追加したり、公開用ブランチを作成したりする必要はありません。
+push前にPagesを設定できなかった場合は、設定後にActionsの失敗した実行を **Re-run all jobs** で再実行してください。
+公開後はタイトル、漢字一覧、4字抽選、試合開始、3D表示・操作・効果音、リザルトをPCとスマホで確認してください。
 
 ## フォント
 
@@ -160,7 +172,7 @@ npm run preview
 
 スマホ縦320×568・390×844、PC1366×900のブラウザ画面幅で確認済みです。
 実機スマホのSafari／Chromeでの操作や実際の通信速度は未確認です。
-GitHub Pagesへの公開と公開URLでの確認は区切り7で行います。
+GitHub Pagesの公開設定と公開URLでの確認は、上記の公開手順で行います。
 
 ## アクション操作と背景
 
